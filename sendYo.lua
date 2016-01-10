@@ -1,4 +1,6 @@
 --This code assumes that the WIFI AP has already been set up
+print("sending hardcoded yo")
+
 sk = nil
 sk = net.createConnection(net.TCP,0)
 sk:on("receive", function(sck, c) print(c) end )
