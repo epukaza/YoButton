@@ -35,6 +35,11 @@ function updateWithNewValues(payload)
         file.write(newrecipient)
         file.close()
       end
+      setupStarted=0
+end
+
+function serveFile(c, f)
+  
 end
 
 function setupServerResponses()
@@ -50,7 +55,14 @@ function setupServerResponses()
       if(ind[1] ~= nil)then
         payload = string.sub(payload, 1, ind[1])
       end
+      --payload is reduced to the first line
       print(payload)
+      --[[requestedFile = string.match(payload, "/(.+) HTTP")
+      if file.open(requestedFile, "r") then
+        serveFile(conn, requestedFile)
+        return
+      end
+      --]]
       updateWithNewValues(payload)
 
       file.open("yorecipient.txt", "r")

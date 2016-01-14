@@ -2,16 +2,21 @@
 file.open("yorecipient.txt", "r")
 print("sending yo to "..file.readline())
 file.close()
+wifi.sleeptype(wifi.NONE_SLEEP)
 
 function generateContentString()
 	file.open("yorecipient.txt", "r")
 	return "api_token=99c680b7-5f9f-48fd-9459-46cda7e1c8fa&username="..string.upper(file.readline())
 end
 
-
+wifi.setmode(wifi.STATION)
 sk = nil
 sk = net.createConnection(net.TCP,0)
-sk:on("receive", function(sck, c) print(c) end )
+sk:on("receive", function(sck, c)
+    print(c)
+    wifi.sleeptype(wifi.MODEM_SLEEP)
+    end)
+    
 sk:on("connection", function(sk, payload)
 						contentString = generateContentString()
 						strlen = string.len(contentString)
