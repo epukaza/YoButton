@@ -1,5 +1,4 @@
 function startSetup()
-  print("Button press registered")
   wifi.sta.disconnect()
   print("Wifi disconnected")
   wifi.setmode(wifi.STATIONAP)
@@ -74,23 +73,23 @@ function setupServerResponses()
       if(ip==nil) then
         ip="0.0.0.0"
       end
-      conn:send("<body><h1>YO Button setup</h1>")
-      conn:send("Current wifi SSID: <br>")
-      conn:send("<input type=\"text\" value=\""..ssid .."\" readonly><br>")
-      conn:send("Current wifi password: <br>")
-      conn:send("<input type=\"text\" value=\""..password .."\" readonly><br>")
-      conn:send("Yo Button's IP address: <br>")
-      conn:send("<input type=\"text\" value=\""..ip.."\" readonly><br>")
-      conn:send("Yo recipient: <br>")
-      conn:send("<input type=\"text\" value=\""..recipient.."\" readonly><br>")
-      conn:send("<form>New SSID: <br>")
-      conn:send("<input type=\"text\" name=\"newssid\" value=\""..ssid .."\"><br>")
-      conn:send("New password: <br>")
-      conn:send("<input type=\"text\" name=\"newpass\" value=\""..password .."\"><br>")
-      conn:send("New recipient: <br>")
-      conn:send("<input type=\"text\" name=\"newrecipient\" value=\""..recipient.."\"><br>")
-      conn:send("<input type=\"submit\" name=\"Submit\">")
-      conn:send("</form></body>")
+      conn:send("<body><h1>YO Button setup</h1>"
+      .."Current wifi SSID: <br>"
+      .."<input type=\"text\" value=\""..ssid .."\" readonly><br>"
+      .."Current wifi password: <br>"
+      .."<input type=\"text\" value=\""..password .."\" readonly><br>"
+      .."Yo Button's IP address: <br>"
+      .."<input type=\"text\" value=\""..ip.."\" readonly><br>"
+      .."Yo recipient: <br>"
+      .."<input type=\"text\" value=\""..recipient.."\" readonly><br>"
+      .."<form>New SSID: <br>"
+      .."<input type=\"text\" name=\"newssid\" value=\""..ssid .."\"><br>"
+      .."New password: <br>"
+      .."<input type=\"text\" name=\"newpass\" value=\""..password .."\"><br>"
+      .."New recipient: <br>"
+      .."<input type=\"text\" name=\"newrecipient\" value=\""..recipient.."\"><br>"
+      .."<input type=\"submit\" name=\"Submit\">"
+      .."</form></body>")
     end)
     conn:on("sent",function(conn) conn:close() end)
   end)
