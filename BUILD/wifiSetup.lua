@@ -1,5 +1,7 @@
 function broadcastAP()
   SETUP = true
+  gpio.mode(4, gpio.OUTPUT)
+  gpio.write(4, gpio.LOW)
   wifi.sta.disconnect()
   debugMsg("WiFi disconnected")
   wifi.setmode(wifi.STATIONAP)
@@ -35,6 +37,7 @@ function updateWiFiCreds(payload)
     file.open("yorecipient.txt", "w+")
     file.write(newrecipient)
     file.close()
+    gpio.write(4, gpio.HIGH)
   end
   SETUP = false -- currently: attempts to send Yos regardless of connection status, as long as form is submitted
 end
