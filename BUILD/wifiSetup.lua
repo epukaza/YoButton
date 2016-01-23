@@ -13,34 +13,30 @@ function broadcastAP()
 end
 
 function updateWiFiCreds(payload)
-      ssidIndex = {payload:find("newssid=")}
-      passIndex = {payload:find("&newpass=")}
-      recipientIndex = {payload:find("&newrecipient=")}
-      submitIndex = {payload:find("&Submit=")}
+  ssidIndex = {payload:find("newssid=")}
+  passIndex = {payload:find("&newpass=")}
+  recipientIndex = {payload:find("&newrecipient=")}
+  submitIndex = {payload:find("&Submit=")}
 
-      if(ssidIndex[1]~=nil and payload:find("?")~=nil) then
-        wifi.setmode(wifi.STATION)
+  if(ssidIndex[1]~=nil and payload:find("?")~=nil) then
+    wifi.setmode(wifi.STATION)
 
-        debugMsg(ssidIndex[1]..", "..ssidIndex[2])
-        debugMsg(passIndex[1]..", "..passIndex[2])
-        debugMsg(recipientIndex[1]..", "..recipientIndex[2])
-        debugMsg(submitIndex[1]..", "..submitIndex[2])
-        newssid = string.gsub(string.sub(payload, ssidIndex[2]+1, passIndex[1]-1), "+", " ")
-        newpassword = string.gsub(string.sub(payload, passIndex[2]+1, recipientIndex[1]-1), "+", " ")
-        newrecipient = string.upper(string.sub(payload, recipientIndex[2]+1, submitIndex[1]-1))
-        debugMsg(newssid)
-        debugMsg(newpassword)
-        debugMsg(newrecipient)
-        wifi.sta.config(newssid, newpassword)
-        file.open("yorecipient.txt", "w+")
-        file.write(newrecipient)
-        file.close()
-      end
-      SETUP = false -- currently: attempts to send Yos regardless of connection status, as long as form is submitted
-end
-
-function serveFile(c, f)
-  
+    debugMsg(ssidIndex[1]..", "..ssidIndex[2])
+    debugMsg(passIndex[1]..", "..passIndex[2])
+    debugMsg(recipientIndex[1]..", "..recipientIndex[2])
+    debugMsg(submitIndex[1]..", "..submitIndex[2])
+    newssid = string.gsub(string.sub(payload, ssidIndex[2]+1, passIndex[1]-1), "+", " ")
+    newpassword = string.gsub(string.sub(payload, passIndex[2]+1, recipientIndex[1]-1), "+", " ")
+    newrecipient = string.upper(string.sub(payload, recipientIndex[2]+1, submitIndex[1]-1))
+    debugMsg(newssid)
+    debugMsg(newpassword)
+    debugMsg(newrecipient)
+    wifi.sta.config(newssid, newpassword)
+    file.open("yorecipient.txt", "w+")
+    file.write(newrecipient)
+    file.close()
+  end
+  SETUP = false -- currently: attempts to send Yos regardless of connection status, as long as form is submitted
 end
 
 function setupServerResponses()
@@ -70,23 +66,17 @@ function setupServerResponses()
         ip="0.0.0.0"
       end
 
-      conn:send("<body><h1>YO Button setup</h1>"
-      .."Current wifi SSID: <br>"
-      .."<input type=\"text\" value=\""..ssid .."\" readonly><br>"
-      .."Current wifi password: <br>"
-      .."<input type=\"text\" value=\""..password .."\" readonly><br>"
-      .."Yo Button's IP address: <br>"
-      .."<input type=\"text\" value=\""..ip.."\" readonly><br>"
-      .."Yo recipient: <br>"
-      .."<input type=\"text\" value=\""..recipient.."\" readonly><br>"
-      .."<form>New SSID: <br>"
-      .."<input type=\"text\" name=\"newssid\" value=\""..ssid .."\"><br>"
-      .."New password: <br>"
-      .."<input type=\"text\" name=\"newpass\" value=\""..password .."\"><br>"
-      .."New recipient: <br>"
-      .."<input type=\"text\" name=\"newrecipient\" value=\""..recipient.."\"><br>"
-      .."<input type=\"submit\" name=\"Submit\">"
-      .."</form></body>")
+      file.open('index.html')
+      indexhtml = file.read()
+      file.close()
+
+      indexhtml = string.gsub(indexhtml, "SSID_T", ssid)
+      indexhtml = string.gsub(indexhtml, "PASSWORD_T", password)
+      indexhtml = string.gsub(indexhtml, "IP_T", ip)
+      indexhtml = string.gsub(indexhtml, "RECIPIENT_T", recipient)
+
+      conn:send(indexhtml)
+
     end)
     conn:on("sent", function(conn)
                       conn:close()
