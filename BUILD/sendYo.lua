@@ -10,22 +10,18 @@ function generateContentString()
 end
 
 wifi.setmode(wifi.STATION)
-sk = nil
-sk = net.createConnection(net.TCP,0)
-sk:on("receive", function(sck, c)
-    print(c)
-    wifi.sleeptype(wifi.MODEM_SLEEP)
-    end)
-    
-sk:on("connection", function(sk, payload)
-						contentString = generateContentString()
-						strlen = string.len(contentString)
-						sk:send("POST /yo/ HTTP/1.1\r\n"
-							.."Host: api.justyo.co\r\n"
-							.."Connection: close\r\n"
-							.."Content-Length: "..strlen.."\r\n"
-							.."Accept: */*\r\n"
-							.."Content-type: application/x-www-form-urlencoded\r\n\r\n"
-							..contentString)
-					end)
-sk:connect(80, "api.justyo.co")
+
+contentString = generateContentString()
+contentLength = string.len(contentString)
+http.post(
+	'https://api.justyo.co/yo/',
+	'Content-Type: application/x-www-form-urlencoded\r\n'..
+	'Content-length: ' ..contentLength.. '\r\n',
+	contentString,
+	function(code, data)
+		print("POST REQUEST CALLBACK")
+		print("code: ", code)
+		print("data: ", data)
+		wifi.sleeptype(wifi.MODEM_SLEEP)
+	end
+)
