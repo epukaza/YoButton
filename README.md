@@ -14,3 +14,14 @@ Espressif ESP8266 SDK is installed. Toolchain contains only Open Source componen
 To link external proprietary libraries add:
 
 `xtensa-lx106-elf-gcc -I/Users/aria/code/espbuild/esp-open-sdk/sdk/include -L/Users/aria/code/espbuild/esp-open-sdk/sdk/lib`
+
+# Flashing
+
+`/Users/aria/code/espbuild/esp-open-sdk/esptool`
+
+`python esptool.py -p /dev/tty.SLAB_USBtoUART write_flash 0x00 /opt/Espressif/nodemcu-firmware/bin/0x00000.bin` etc
+
+
+# other notes
+
+Building with default modules + debug causes luatool to fail with `'stdin:1: attempt to call field 'open' (a nil value)'` since it seems file.open isn't defined. Rebuilt with fewer modules + debug and file upload seems to work fine. Did the build... just run out of space and truncate the image?
