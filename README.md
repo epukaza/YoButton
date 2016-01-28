@@ -24,4 +24,6 @@ To link external proprietary libraries add:
 
 # other notes
 
+RELEVANT - USE 1.5.1 ONLY: https://github.com/nodemcu/nodemcu-firmware/issues/719
+
 Building with default modules + debug causes luatool to fail with `'stdin:1: attempt to call field 'open' (a nil value)'` since it seems file.open isn't defined. Rebuilt with fewer modules + debug and file upload seems to work fine. Did the build... just run out of space and truncate the image?
