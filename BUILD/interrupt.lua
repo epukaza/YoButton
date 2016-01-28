@@ -6,7 +6,7 @@ SETUP = false
 
 function debugMsg(msg)
   if DEBUG then
-    print(msg)
+    print("Yo debug:", msg)
   end
 end
 
