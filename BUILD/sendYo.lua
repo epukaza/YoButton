@@ -19,9 +19,9 @@ http.post(
 	'Content-length: ' ..contentLength.. '\r\n',
 	contentString,
 	function(code, data)
-		print("POST REQUEST CALLBACK")
-		print("code: ", code)
-		print("data: ", data)
+		debugMsg("POST REQUEST CALLBACK")
+		debugMsg("code: " .. code)
+		debugMsg("data: " .. data)
 		wifi.sleeptype(wifi.LIGHT_SLEEP)
 	end
 )
