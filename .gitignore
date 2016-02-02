@@ -1,3 +1,5 @@
 .DS_Store
 *.pdf
 *.stl
+/3d_models/*
+/test_certs/*
