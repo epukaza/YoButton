@@ -19,9 +19,9 @@ function shortOrLongPress()
   if level == 0 then -- button depressed
     debugMsg("LONG PRESS TIMER START")
     tmr.alarm(5, longPress, 0, function()
-                                 debugMsg("LONG PRESS")
-                                 dofile('wifiSetup.lua')
-                               end)
+      debugMsg("LONG PRESS")
+      dofile('wifiSetup.lua')
+    end)
   else -- button released
     debugMsg("SETUP STATUS " .. tostring(SETUP))
     tmr.stop(5)
@@ -34,7 +34,7 @@ end
 
 function debounce (func)
   local last = 0
-  local delay = 100000
+  local delay = 200000
 
   return function (...)
     local now = tmr.now()
