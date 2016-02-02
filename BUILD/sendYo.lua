@@ -22,6 +22,6 @@ http.post(
 		print("POST REQUEST CALLBACK")
 		print("code: ", code)
 		print("data: ", data)
-		wifi.sleeptype(wifi.MODEM_SLEEP)
+		wifi.sleeptype(wifi.LIGHT_SLEEP)
 	end
 )
