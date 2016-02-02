@@ -23,6 +23,8 @@ end
 function stopBroadcastAP()
   wifi.setmode(wifi.STATION)
   gpio.write(4, gpio.HIGH)
+  srv:close()
+  srv = nil
   SETUP = false
 end
 
@@ -68,9 +70,9 @@ function updateSettings(payload)
 end
 
 function setupServer()
-  if(srv~=nil) then
+  if(srv ~= nil) then
     srv:close()
-    srv=nil
+    srv = nil
   end
   srv = net.createServer(net.TCP)
   srv:listen(80, function(conn)
