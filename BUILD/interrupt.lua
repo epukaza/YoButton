@@ -16,7 +16,7 @@ function shortOrLongPress()
   debugMsg('The pin value has changed to '..gpio.read(buttonPin))
   debugMsg("detected level " .. level)
 
-  if level == 0 then -- button depressed
+  if level == 1 then -- button depressed
     debugMsg("LONG PRESS TIMER START")
     tmr.alarm(5, longPress, 0, function()
       debugMsg("LONG PRESS")
@@ -54,5 +54,5 @@ function debounce (func)
   end
 end
 
-gpio.mode(buttonPin, gpio.INT, gpio.PULLUP)
+gpio.mode(buttonPin, gpio.INT, gpio.FLOAT)
 gpio.trig(buttonPin, "both", debounce(shortOrLongPress))
