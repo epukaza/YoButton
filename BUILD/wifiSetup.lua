@@ -1,9 +1,5 @@
---hoisting globals for easy future removal
-settingsUpdated = false
-srv = nil
-indexTimer = 3
-
 function broadcastAP()
+  SETUP = true
   wifi.setmode(wifi.STATIONAP)
 
   gpio.mode(4, gpio.OUTPUT)
@@ -21,11 +17,35 @@ function broadcastAP()
 end
 
 function stopBroadcastAP()
+  tmr.stop(SETUP_INACTIVITY_TIMER)
   wifi.setmode(wifi.STATION)
   gpio.write(4, gpio.HIGH)
   srv:close()
   srv = nil
   SETUP = false
+end
+
+function restartSetupTimeout(millisec)
+  local ms = millisec or SETUP_TIMEOUT
+  tmr.unregister(SETUP_INACTIVITY_TIMER)
+  tmr.alarm(SETUP_INACTIVITY_TIMER, ms, tmr.ALARM_SINGLE, function()
+      debugMsg("Setup mode timed out")   
+      stopBroadcastAP()
+    end)
+end
+
+function waitForWifiStatus(conn)
+  tmr.alarm(WIFI_WAIT_TIMER, 1000, 1, function()
+    if wifi.sta.status() ~= 0 and wifi.sta.status() ~= 1 then
+      local newStatus = wifi.sta.status()
+      debugMsg("Wifi status: " .. newStatus)
+      tmr.stop(WIFI_WAIT_TIMER)
+      sendIndex(conn)
+    else
+      debugMsg ("Waiting for Wifi status, currently " .. wifi.sta.status())
+      restartSetupTimeout()
+    end
+  end)
 end
 
 function updateSettings(payload)
@@ -60,8 +80,6 @@ function updateSettings(payload)
       file.write(newrecipient)
       file.close()
 
-      stopBroadcastAP()
-
       return true
     end
   else
@@ -70,40 +88,31 @@ function updateSettings(payload)
 end
 
 function setupServer()
-  if(srv ~= nil) then
-    srv:close()
-    srv = nil
-  end
   srv = net.createServer(net.TCP)
   srv:listen(80, function(conn)
     conn:on("receive", function(conn, payload)
       debugMsg("request received")
       debugMsg(payload)
-      updateSettings(payload)
-      
-      tmr.alarm(indexTimer, 100, 0, function ()
-        sendIndex(conn)
-      end)
+
+      restartSetupTimeout()
+      updated = updateSettings(payload)
+      waitForWifiStatus(conn)
     end)
 
     conn:on("sent", function(conn)
       conn:close()
+      if updated and wifi.sta.status() == 5 then
+        debugMsg("updated and connected")
+        tmr.alarm(SUCCESS_SETUP_TIMER, 3000, tmr.ALARM_SINGLE, function()
+          debugMsg("closing AP")
+          stopBroadcastAP()
+        end)
+      end
     end)
   end)
 end
 
 function sendIndex(conn)
-  file.open('index.html')
-  local indexhtml = file.read()
-  file.close()
-
-  --[[ STATUS CODES:
-  0: STATION_IDLE
-  1: STATION_CONNECTING
-  2: STATION_WRONG_PASSWORD
-  3: STATION_NO_AP_FOUND
-  4: STATION_CONNECT_FAIL
-  5: STATION_GOT_IP ]]
 
   local statusMessages = {}
   statusMessages[0] = 'not enabled'
@@ -115,8 +124,13 @@ function sendIndex(conn)
 
   local ssid = wifi.sta.getconfig()
   local status = statusMessages[wifi.sta.status()]
+
   file.open("yorecipient.txt", "r")
   local recipient = string.gsub(file.readline(), "\n", "", 1)
+  file.close()
+
+  file.open('index.html')
+  local indexhtml = file.read()
   file.close()
 
   indexhtml = string.gsub(indexhtml, "_S_", ssid)
@@ -124,12 +138,13 @@ function sendIndex(conn)
   indexhtml = string.gsub(indexhtml, "_R_", recipient)
 
   conn:send(indexhtml)
-  
 end
 
 function setupMode()
+  local srv = nil
+
   if SETUP ~= true then
-    SETUP = true    
+    restartSetupTimeout()
     broadcastAP()
     setupServer()
   end
