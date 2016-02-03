@@ -14,20 +14,26 @@ WIFI_WAIT_TIMER = 4
 SUCCESS_SETUP_TIMER = 5
 
 YO_RECIPIENT = nil
+API_KEY = nil
 
 print("3 second startup delay using timer " .. STARTUP_DELAY_TIMER .. '...')
 tmr.alarm(STARTUP_DELAY_TIMER, 3000, 0, function ()
-    print("Starting.")
+  print("Starting.")
 
-    function debugMsg(msg)
-      print("Yo debug: " .. msg)
-    end
+  function debugMsg(msg)
+    print("Yo debug: " .. msg)
+  end
 
-    -- yo recipient file must exist
-    yoRecipientExists = file.open('yorecipient.txt', 'r')
-    YO_RECIPIENT = file.read()
-    file.close()
-    debugMsg('found recipient: ' .. tostring(YO_RECIPIENT))
+  -- yo recipient file must exist
+  yoRecipientExists = file.open('yorecipient.txt', 'r')
+  YO_RECIPIENT = file.read()
+  file.close()
+  debugMsg('found recipient: ' .. tostring(YO_RECIPIENT))
 
-    dofile("interrupt.lua")
-  end)
+  apiKeyExists = file.open('apikey.txt', 'r')
+  API_KEY = file.read()
+  file.close()
+  debugMsg('api key: ' .. API_KEY)
+
+  dofile("interrupt.lua")
+end)
