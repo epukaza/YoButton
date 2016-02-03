@@ -40,8 +40,7 @@ function waitForWifiStatus(conn)
       debugMsg ("Waiting for Wifi status, currently " .. wifi.sta.status())
       restartSetupTimeout()
     else
-      local newStatus = wifi.sta.status()
-      debugMsg("Wifi status: " .. newStatus)
+      debugMsg("Wifi status: " .. wifi.sta.status())
       tmr.stop(WIFI_WAIT_TIMER)
       sendIndex(conn)
     end
@@ -91,6 +90,7 @@ function updateSettings(payload)
 end
 
 function setupServer()
+  local updated
   srv = net.createServer(net.TCP, 60)
   srv:listen(80, function(conn)
     conn:on("receive", function(conn, payload)
@@ -98,20 +98,21 @@ function setupServer()
       debugMsg(payload)
 
       restartSetupTimeout()
-      local updated = updateSettings(payload)
+      updated = updateSettings(payload)
       waitForWifiStatus(conn)
     end)
 
     conn:on("sent", function(conn)
       conn:close()
-      if updated then
+      debugMsg("sent: " .. tostring(updated) .. ' ' .. wifi.sta.status())
+      if updated and wifi.sta.status() == 5 then
+        
         debugMsg("updated and connected")
-        tmr.alarm(SUCCESS_SETUP_TIMER, 5000, tmr.ALARM_SINGLE, function()
-          if wifi.sta.status() == 5 then
-            debugMsg("closing AP")
-            stopBroadcastAP()
-          end
+        tmr.alarm(SUCCESS_SETUP_TIMER, 1000, tmr.ALARM_SINGLE, function()
+          debugMsg("closing AP")
+          stopBroadcastAP()
         end)
+
       end
     end)
   end)
@@ -134,7 +135,7 @@ function sendIndex(conn)
   local recipient = YO_RECIPIENT
   if not recipient then
     recipient = ''
-    debugMsg("recipient" .. recipient)
+    debugMsg("recipient: " .. recipient)
   end
 
   file.open('index.html')
@@ -146,6 +147,9 @@ function sendIndex(conn)
   indexhtml = string.gsub(indexhtml, "_R_", recipient)
 
   debugMsg('sending indexhtml')
+  debugMsg('____________')
+  debugMsg(indexhtml)
+  debugMsg('____________')
   conn:send(indexhtml)
 end
 

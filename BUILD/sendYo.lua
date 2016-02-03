@@ -2,7 +2,7 @@ wifi.sleeptype(wifi.NONE_SLEEP)
 wifi.setmode(wifi.STATION)
 
 if YO_RECIPIENT then
-	debugMsg('sending yo to' .. YO_RECIPIENT)
+	debugMsg('sending yo to ' .. YO_RECIPIENT)
 	local contentString = "api_token=0c6ac771-71fa-420f-810c-2853989a8ca6&username="..string.upper(YO_RECIPIENT)
 	local contentLength = string.len(contentString)
 
