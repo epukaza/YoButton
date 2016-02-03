@@ -49,10 +49,10 @@ end
 
 function updateSettings(payload)
   if payload then
-    local ssidIndex = {payload:find("ssid=")}
-    local passIndex = {payload:find("&pass=")}
-    local recipientIndex = {payload:find("&recipient=")}
-    local submitIndex = {payload:find("&Submit=")}
+    local ssidIndex = {payload:find("s=")}
+    local passIndex = {payload:find("&p=")}
+    local recipientIndex = {payload:find("&r=")}
+    local submitIndex = {payload:find("&s=")}
 
     if ssidIndex[1] ~= nil then
       local newssid = string.gsub(string.sub(payload, ssidIndex[2]+1, passIndex[1]-1), "+", " ")
@@ -142,9 +142,9 @@ function sendIndex(conn)
   local indexhtml = file.read()
   file.close()
 
-  indexhtml = string.gsub(indexhtml, "_S_", ssid)
-  indexhtml = string.gsub(indexhtml, "_T_", status)
-  indexhtml = string.gsub(indexhtml, "_R_", recipient)
+  indexhtml = string.gsub(indexhtml, "S_", ssid)
+  indexhtml = string.gsub(indexhtml, "T_", status)
+  indexhtml = string.gsub(indexhtml, "R_", recipient)
 
   debugMsg('sending indexhtml')
   debugMsg('____________')
