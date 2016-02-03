@@ -1,5 +1,6 @@
 --[[ ASSUMPTIONS
 yorecipient.txt exists
+apikey.txt exists and contains a valid API key
 ]] 
 
 DEBUG = true
@@ -24,7 +25,8 @@ tmr.alarm(STARTUP_DELAY_TIMER, 3000, 0, function ()
     print("Yo debug: " .. msg)
   end
 
-  -- yo recipient file must exist
+  debugMsg('Booting button ' .. node.chipid())
+
   yoRecipientExists = file.open('yorecipient.txt', 'r')
   YO_RECIPIENT = file.read()
   file.close()
