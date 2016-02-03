@@ -9,18 +9,26 @@ SETUP_INACTIVITY_TIMER = 3
 WIFI_WAIT_TIMER = 4
 SUCCESS_SETUP_TIMER = 5
 
+YO_RECIPIENT = nil
+
 print("3 second startup delay using timer " .. STARTUP_DELAY_TIMER .. '...')
 tmr.alarm(STARTUP_DELAY_TIMER, 3000, 0, function ()
     print("Starting.")
 
-    -- yo recipient file must exist
-    yoRecipientExists = file.open('yorecipient.txt', 'r')
-    file.close()
-    if yoRecipientExists == nil then
-      file.open('yorecipient.txt', 'w+')
-      file.close()
+    function debugMsg(msg)
+      print("Yo debug: " .. msg)
     end
 
+    -- yo recipient file must exist
+    yoRecipientExists = file.open('yorecipient.txt', 'r')
+    if yoRecipientExists == nil then
+      file.close()
+      file.open('yorecipient.txt', 'w+')
+      file.write('')
+    else
+      YO_RECIPIENT = file.read()
+    end
+    file.close()
 
     dofile("interrupt.lua")
   end)

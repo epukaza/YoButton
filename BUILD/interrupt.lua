@@ -2,12 +2,6 @@
 local longPress = 3000 -- 3 seconds
 local buttonPin = 6 -- GPIO6
 
-function debugMsg(msg)
-  if DEBUG then
-    print("Yo debug:", msg)
-  end
-end
-
 function shortOrLongPress()
   local level = gpio.read(buttonPin)
 

@@ -36,14 +36,14 @@ end
 
 function waitForWifiStatus(conn)
   tmr.alarm(WIFI_WAIT_TIMER, 1000, 1, function()
-    if wifi.sta.status() ~= 0 and wifi.sta.status() ~= 1 then
+    if wifi.sta.status() == 0 or wifi.sta.status() == 1 then
+      debugMsg ("Waiting for Wifi status, currently " .. wifi.sta.status())
+      restartSetupTimeout()
+    else
       local newStatus = wifi.sta.status()
       debugMsg("Wifi status: " .. newStatus)
       tmr.stop(WIFI_WAIT_TIMER)
       sendIndex(conn)
-    else
-      debugMsg ("Waiting for Wifi status, currently " .. wifi.sta.status())
-      restartSetupTimeout()
     end
   end)
 end
@@ -75,8 +75,11 @@ function updateSettings(payload)
         return false
       end
 
+      debugMsg("updating settings")
       wifi.sta.config(newssid, newpassword)
-      file.open("yorecipient.txt", "w+")
+
+      YO_RECIPIENT = newrecipient
+      file.open('yorecipient.txt', "w+")
       file.write(newrecipient)
       file.close()
 
@@ -88,24 +91,26 @@ function updateSettings(payload)
 end
 
 function setupServer()
-  srv = net.createServer(net.TCP)
+  srv = net.createServer(net.TCP, 60)
   srv:listen(80, function(conn)
     conn:on("receive", function(conn, payload)
       debugMsg("request received")
       debugMsg(payload)
 
       restartSetupTimeout()
-      updated = updateSettings(payload)
+      local updated = updateSettings(payload)
       waitForWifiStatus(conn)
     end)
 
     conn:on("sent", function(conn)
       conn:close()
-      if updated and wifi.sta.status() == 5 then
+      if updated then
         debugMsg("updated and connected")
-        tmr.alarm(SUCCESS_SETUP_TIMER, 3000, tmr.ALARM_SINGLE, function()
-          debugMsg("closing AP")
-          stopBroadcastAP()
+        tmr.alarm(SUCCESS_SETUP_TIMER, 5000, tmr.ALARM_SINGLE, function()
+          if wifi.sta.status() == 5 then
+            debugMsg("closing AP")
+            stopBroadcastAP()
+          end
         end)
       end
     end)
@@ -122,12 +127,15 @@ function sendIndex(conn)
   statusMessages[4] = 'connection fail'
   statusMessages[5] = 'connected'
 
+  debugMsg('preparing indexhtml')
+
   local ssid = wifi.sta.getconfig()
   local status = statusMessages[wifi.sta.status()]
-
-  file.open("yorecipient.txt", "r")
-  local recipient = string.gsub(file.readline(), "\n", "", 1)
-  file.close()
+  local recipient = YO_RECIPIENT
+  if not recipient then
+    recipient = ''
+    debugMsg("recipient" .. recipient)
+  end
 
   file.open('index.html')
   local indexhtml = file.read()
@@ -137,6 +145,7 @@ function sendIndex(conn)
   indexhtml = string.gsub(indexhtml, "_T_", status)
   indexhtml = string.gsub(indexhtml, "_R_", recipient)
 
+  debugMsg('sending indexhtml')
   conn:send(indexhtml)
 end
 
