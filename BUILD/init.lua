@@ -1,3 +1,7 @@
+--[[ ASSUMPTIONS
+yorecipient.txt exists
+]] 
+
 DEBUG = true
 SETUP = false
 SETUP_TIMEOUT = 120000
@@ -21,14 +25,9 @@ tmr.alarm(STARTUP_DELAY_TIMER, 3000, 0, function ()
 
     -- yo recipient file must exist
     yoRecipientExists = file.open('yorecipient.txt', 'r')
-    if yoRecipientExists == nil then
-      file.close()
-      file.open('yorecipient.txt', 'w+')
-      file.write('')
-    else
-      YO_RECIPIENT = file.read()
-    end
+    YO_RECIPIENT = file.read()
     file.close()
+    debugMsg('found recipient: ' .. tostring(YO_RECIPIENT))
 
     dofile("interrupt.lua")
   end)
