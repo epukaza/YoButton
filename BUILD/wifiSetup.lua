@@ -1,9 +1,5 @@
---hoisting globals for easy future removal
-settingsUpdated = false
-srv = nil
-indexTimer = 3
-
 function broadcastAP()
+  SETUP = true
   wifi.setmode(wifi.STATIONAP)
 
   gpio.mode(4, gpio.OUTPUT)
@@ -21,6 +17,7 @@ function broadcastAP()
 end
 
 function stopBroadcastAP()
+  tmr.stop(SETUP_INACTIVITY_TIMER)
   wifi.setmode(wifi.STATION)
   gpio.write(4, gpio.HIGH)
   srv:close()
@@ -28,12 +25,34 @@ function stopBroadcastAP()
   SETUP = false
 end
 
+function restartSetupTimeout(millisec)
+  local ms = millisec or SETUP_TIMEOUT
+  tmr.unregister(SETUP_INACTIVITY_TIMER)
+  tmr.alarm(SETUP_INACTIVITY_TIMER, ms, tmr.ALARM_SINGLE, function()
+      debugMsg("Setup mode timed out")   
+      stopBroadcastAP()
+    end)
+end
+
+function waitForWifiStatus(conn)
+  tmr.alarm(WIFI_WAIT_TIMER, 1000, 1, function()
+    if wifi.sta.status() == 0 or wifi.sta.status() == 1 then
+      debugMsg ("Waiting for Wifi status, currently " .. wifi.sta.status())
+      restartSetupTimeout()
+    else
+      debugMsg("Wifi status: " .. wifi.sta.status())
+      tmr.stop(WIFI_WAIT_TIMER)
+      sendIndex(conn)
+    end
+  end)
+end
+
 function updateSettings(payload)
   if payload then
-    local ssidIndex = {payload:find("ssid=")}
-    local passIndex = {payload:find("&pass=")}
-    local recipientIndex = {payload:find("&recipient=")}
-    local submitIndex = {payload:find("&Submit=")}
+    local ssidIndex = {payload:find("s=")}
+    local passIndex = {payload:find("&p=")}
+    local recipientIndex = {payload:find("&r=")}
+    local submitIndex = {payload:find("&s=")}
 
     if ssidIndex[1] ~= nil then
       local newssid = string.gsub(string.sub(payload, ssidIndex[2]+1, passIndex[1]-1), "+", " ")
@@ -55,12 +74,13 @@ function updateSettings(payload)
         return false
       end
 
+      debugMsg("updating settings")
       wifi.sta.config(newssid, newpassword)
-      file.open("yorecipient.txt", "w+")
+
+      YO_RECIPIENT = newrecipient
+      file.open('yorecipient.txt', "w+")
       file.write(newrecipient)
       file.close()
-
-      stopBroadcastAP()
 
       return true
     end
@@ -70,40 +90,35 @@ function updateSettings(payload)
 end
 
 function setupServer()
-  if(srv ~= nil) then
-    srv:close()
-    srv = nil
-  end
-  srv = net.createServer(net.TCP)
+  local updated
+  srv = net.createServer(net.TCP, 60)
   srv:listen(80, function(conn)
     conn:on("receive", function(conn, payload)
       debugMsg("request received")
       debugMsg(payload)
-      updateSettings(payload)
-      
-      tmr.alarm(indexTimer, 100, 0, function ()
-        sendIndex(conn)
-      end)
+
+      restartSetupTimeout()
+      updated = updateSettings(payload)
+      waitForWifiStatus(conn)
     end)
 
     conn:on("sent", function(conn)
       conn:close()
+      debugMsg("sent: " .. tostring(updated) .. ' ' .. wifi.sta.status())
+      if updated and wifi.sta.status() == 5 then
+        
+        debugMsg("updated and connected")
+        tmr.alarm(SUCCESS_SETUP_TIMER, 1000, tmr.ALARM_SINGLE, function()
+          debugMsg("closing AP")
+          stopBroadcastAP()
+        end)
+
+      end
     end)
   end)
 end
 
 function sendIndex(conn)
-  file.open('index.html')
-  local indexhtml = file.read()
-  file.close()
-
-  --[[ STATUS CODES:
-  0: STATION_IDLE
-  1: STATION_CONNECTING
-  2: STATION_WRONG_PASSWORD
-  3: STATION_NO_AP_FOUND
-  4: STATION_CONNECT_FAIL
-  5: STATION_GOT_IP ]]
 
   local statusMessages = {}
   statusMessages[0] = 'not enabled'
@@ -113,23 +128,36 @@ function sendIndex(conn)
   statusMessages[4] = 'connection fail'
   statusMessages[5] = 'connected'
 
+  debugMsg('preparing indexhtml')
+
   local ssid = wifi.sta.getconfig()
   local status = statusMessages[wifi.sta.status()]
-  file.open("yorecipient.txt", "r")
-  local recipient = string.gsub(file.readline(), "\n", "", 1)
+  local recipient = YO_RECIPIENT
+  if not recipient then
+    recipient = ''
+    debugMsg("recipient: " .. recipient)
+  end
+
+  file.open('index.html')
+  local indexhtml = file.read()
   file.close()
 
-  indexhtml = string.gsub(indexhtml, "_S_", ssid)
-  indexhtml = string.gsub(indexhtml, "_T_", status)
-  indexhtml = string.gsub(indexhtml, "_R_", recipient)
+  indexhtml = string.gsub(indexhtml, "S_", ssid)
+  indexhtml = string.gsub(indexhtml, "T_", status)
+  indexhtml = string.gsub(indexhtml, "R_", recipient)
 
+  debugMsg('sending indexhtml')
+  debugMsg('____________')
+  debugMsg(indexhtml)
+  debugMsg('____________')
   conn:send(indexhtml)
-  
 end
 
 function setupMode()
+  local srv = nil
+
   if SETUP ~= true then
-    SETUP = true    
+    restartSetupTimeout()
     broadcastAP()
     setupServer()
   end

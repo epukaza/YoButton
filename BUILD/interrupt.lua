@@ -1,30 +1,22 @@
 -- using timer 5 for short/long press detection
-longPress = 3000 -- 3 seconds
-buttonPin = 6 -- GPIO6
-DEBUG = true
-SETUP = false
-
-function debugMsg(msg)
-  if DEBUG then
-    print("Yo debug:", msg)
-  end
-end
+local longPress = 3000 -- 3 seconds
+local buttonPin = 6 -- GPIO6
 
 function shortOrLongPress()
-  level = gpio.read(buttonPin)
+  local level = gpio.read(buttonPin)
 
   debugMsg('The pin value has changed to '..gpio.read(buttonPin))
   debugMsg("detected level " .. level)
 
   if level == 1 then -- button depressed
     debugMsg("LONG PRESS TIMER START")
-    tmr.alarm(5, longPress, 0, function()
+    tmr.alarm(INTERRUPT_TIMER, longPress, 0, function()
       debugMsg("LONG PRESS")
       dofile('wifiSetup.lua')
     end)
   else -- button released
     debugMsg("SETUP STATUS " .. tostring(SETUP))
-    tmr.stop(5)
+    tmr.stop(INTERRUPT_TIMER)
     if not SETUP then
       debugMsg("SHORT PRESS")
       dofile('sendYo.lua')
@@ -39,7 +31,7 @@ function debounce (func)
   return function (...)
     local now = tmr.now()
     if now - last < delay then
-      tmr.stop(5)
+      tmr.stop(INTERRUPT_TIMER)
       debugMsg("DEBOUNCE PREVENTED EXTRA PRESS")
       if not SETUP then
         debugMsg("DEBOUNCE INTERPRETED AS SHORT PRESS")
