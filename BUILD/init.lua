@@ -30,7 +30,11 @@ tmr.alarm(STARTUP_DELAY_TIMER, 3000, 0, function ()
   yoRecipientExists = file.open('yorecipient.txt', 'r')
   YO_RECIPIENT = file.read()
   file.close()
-  debugMsg('found recipient: ' .. tostring(YO_RECIPIENT))
+  if YO_RECIPIENT then
+    YO_RECIPIENT = string.gsub(YO_RECIPIENT, '\n', '')
+    YO_RECIPIENT = string.gsub(YO_RECIPIENT, ' ', '')
+  end
+  debugMsg('found recipient:' .. tostring(YO_RECIPIENT) .. '.')
 
   apiKeyExists = file.open('apikey.txt', 'r')
   API_KEY = file.read()
