@@ -25,6 +25,8 @@ tmr.alarm(STARTUP_DELAY_TIMER, 3000, 0, function ()
     print("Yo debug: " .. msg)
   end
 
+  wifi.setmode(wifi.STATION)
+
   debugMsg('Booting button ' .. node.chipid())
 
   yoRecipientExists = file.open('yorecipient.txt', 'r')

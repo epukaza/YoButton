@@ -9,7 +9,7 @@ function broadcastAP()
   accessPointConfig.ssid = "YoButton-" .. node.chipid()
   accessPointConfig.pwd = "yobutton"
   accessPointConfig.max = 1
-  accessPointConfig.auth = wifi.AUTH_WPA2_PSK
+  accessPointConfig.auth = wifi.AUTH_OPEN
 
   wifi.ap.config(accessPointConfig)
   wifi.ap.dhcp.start()
