@@ -17,6 +17,10 @@ SUCCESS_SETUP_TIMER = 5
 YO_RECIPIENT = nil
 API_KEY = nil
 
+buttonPin = 6 -- GPIO12
+ledPin = 2 --GPIO4
+
+
 print("3 second startup delay using timer " .. STARTUP_DELAY_TIMER .. '...')
 tmr.alarm(STARTUP_DELAY_TIMER, 3000, 0, function ()
   print("Starting.")

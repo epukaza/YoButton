@@ -1,6 +1,4 @@
--- using timer 5 for short/long press detection
 local longPress = 3000 -- 3 seconds
-local buttonPin = 6 -- GPIO6
 
 function shortOrLongPress()
   local level = gpio.read(buttonPin)
@@ -25,8 +23,8 @@ function shortOrLongPress()
 end
 
 function debounce (func)
-  local last = 0
-  local delay = 200000
+  local last = 0 --units: microseconds
+  local delay = 200000 --units: microseconds
 
   return function (...)
     local now = tmr.now()
