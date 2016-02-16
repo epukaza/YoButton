@@ -3,6 +3,7 @@ yorecipient.txt exists
 apikey.txt exists and contains a valid API key
 ]] 
 
+VERSION = '0.1.0'
 DEBUG = true
 SETUP = false
 SETUP_TIMEOUT = 120000
@@ -32,6 +33,7 @@ tmr.alarm(STARTUP_DELAY_TIMER, 3000, 0, function ()
   wifi.setmode(wifi.STATION)
 
   debugMsg('Booting button ' .. node.chipid())
+  debugMsg('Version ' .. VERSION)
 
   yoRecipientExists = file.open('yorecipient.txt', 'r')
   YO_RECIPIENT = file.read()

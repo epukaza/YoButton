@@ -1,5 +1,3 @@
-###version: 0.1.0
-
 ## Use firmware 1.5.1 ONLY: https://github.com/nodemcu/nodemcu-firmware/issues/719
 
 ## OSX ESP firmware build notes
