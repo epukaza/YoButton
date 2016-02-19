@@ -1,3 +1,3 @@
 #!/bin/bash
-
-nodemcu-uploader upload ../build/*
+#must run from withing build dir
+nodemcu-uploader upload *
