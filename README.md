@@ -2,20 +2,27 @@
 
 ## OSX ESP firmware build notes
 
-`error: unknown type name 'ptrdiff_t'` when installing pass-2 core C compiler. 
+Use the Docker NodeMCU build: https://hub.docker.com/r/marcelstoer/nodemcu-build/
 
-Solution: `https://github.com/pfalcon/esp-open-sdk/issues/45` delete define/endef statements
+OSX: `docker run --rm -ti -v /Users/aria/code/nodemcu-firmware/:/opt/nodemcu-firmware/ marcelstoer/nodemcu-build`
 
-# Relevant output
+Using these modules only:
 
-Xtensa toolchain is built, to use it:
-
-`export PATH=/Users/aria/code/espbuild/esp-open-sdk/xtensa-lx106-elf/bin:$PATH`
-
-Espressif ESP8266 SDK is installed. Toolchain contains only Open Source components
-To link external proprietary libraries add:
-
-`xtensa-lx106-elf-gcc -I/Users/aria/code/espbuild/esp-open-sdk/sdk/include -L/Users/aria/code/espbuild/esp-open-sdk/sdk/lib`
+    #define LUA_USE_MODULES_CJSON
+    #define LUA_USE_MODULES_CRYPTO
+    #define LUA_USE_MODULES_FILE
+    #define LUA_USE_MODULES_GPIO
+    #define LUA_USE_MODULES_HTTP
+    #define LUA_USE_MODULES_NET
+    #define LUA_USE_MODULES_NODE
+    #define LUA_USE_MODULES_PWM
+    #define LUA_USE_MODULES_RTCFIFO
+    #define LUA_USE_MODULES_RTCMEM
+    #define LUA_USE_MODULES_RTCTIME
+    #define LUA_USE_MODULES_SNTP
+    #define LUA_USE_MODULES_TMR
+    #define LUA_USE_MODULES_UART
+    #define LUA_USE_MODULES_WIFI
 
 # Flashing
 
