@@ -1,4 +1,11 @@
-module(..., package.seeall)
+local http = http
+local wifi = wifi
+local string = string
+local assert = assert
+local type = type
+local debug_message = debug_message
+
+module(...)
 
 function yo(yo_user, api_token)
   assert(type(yo_user) == 'string', 'yo_user must be a string')
@@ -9,7 +16,7 @@ function yo(yo_user, api_token)
   local content_string = "api_token=" .. api_token .. "&username=" .. string.upper(yo_user)
   local content_length = string.len(content_string)
 
-  debug('yo.yo: sending Yo')
+  debug_message('yo.yo: sending Yo')
   wifi.sleeptype(wifi.NONE_SLEEP)
   http.post(
     'https://api.justyo.co/yo/',
@@ -18,8 +25,8 @@ function yo(yo_user, api_token)
     content_string,
     function(status_code, response_data)
       wifi.sleeptype(wifi.LIGHT_SLEEP)
-      debug('yo.yo: status code: ' .. status_code)
-      debug('yo.yo: response data: ' .. (response_data or 'nil'))
+      debug_message('yo.yo: status code: ' .. status_code)
+      debug_message('yo.yo: response data: ' .. (response_data or 'nil'))
     end
   )
 end
