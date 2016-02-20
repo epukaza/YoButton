@@ -6,7 +6,7 @@ apikey.txt exists and contains a valid API key
 VERSION = '0.1.0'
 DEBUG = true
 SETUP = false
-SETUP_TIMEOUT = 120000
+SETUP_TIMEOUT = 300000
 
 STARTUP_DELAY_TIMER = 0
 INTERRUPT_TIMER = 1
@@ -25,11 +25,8 @@ function debugMsg(msg)
   print("Yo debug: " .. msg)
 end
 
-debugMsg("3 second startup delay using timer " .. STARTUP_DELAY_TIMER .. '...')
-tmr.alarm(STARTUP_DELAY_TIMER, 3000, 0, function ()
+function init()
   debugMsg("Starting.")
-
-
 
   wifi.setmode(wifi.STATION)
 
@@ -45,10 +42,17 @@ tmr.alarm(STARTUP_DELAY_TIMER, 3000, 0, function ()
   end
   debugMsg('found recipient:' .. tostring(YO_RECIPIENT) .. '.')
 
-  apiKeyExists = file.open('apikey.txt', 'r')
+  file.open('apikey.txt', 'r')
   API_KEY = file.read()
   file.close()
   debugMsg('api key: ' .. API_KEY)
 
   dofile("interrupt.lua")
-end)
+end
+if DEBUG then
+  debugMsg("3 second startup delay using timer " .. STARTUP_DELAY_TIMER .. '...')
+  tmr.alarm(STARTUP_DELAY_TIMER, 3000, 0, init)
+else
+  debugMsg("initializing...")
+  init()
+end

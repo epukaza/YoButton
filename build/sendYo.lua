@@ -1,5 +1,4 @@
 wifi.sleeptype(wifi.NONE_SLEEP)
-wifi.setmode(wifi.STATION)
 
 if YO_RECIPIENT ~= nil and YO_RECIPIENT ~= '' then
 	debugMsg('sending yo to ' .. YO_RECIPIENT)
