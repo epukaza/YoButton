@@ -108,11 +108,10 @@ function setupServer()
       if updated and wifi.sta.status() == 5 then
         
         debugMsg("updated and connected")
-        tmr.alarm(SUCCESS_SETUP_TIMER, 1000, tmr.ALARM_SINGLE, function()
+        tmr.alarm(SUCCESS_SETUP_TIMER, 3000, tmr.ALARM_SINGLE, function()
           debugMsg("closing AP")
           stopBroadcastAP()
         end)
-
       end
     end)
   end)
