@@ -46,6 +46,7 @@ function current_settings()
 end
 
 function index()
+  --TODO determine tradeoff of hardcoding index.html
   file.open('index.html')
   local index = file.read()
   file.close()

@@ -14,8 +14,11 @@ local function connect(conn, data)
       query_data = get_http_req(req_data)
       debug_message(query_data['METHOD'] .. ' ' .. ' ' .. query_data['User-Agent'])
 
+      --TODO discriminate endpoints (/, /yo.css, /status, /favicon.ico)
+      --TODO discriminate request types (POST --> update)
+        --TODO parse payload function rewrite
+        
       send_index(cn)
-      -- Close the connection for the request
       cn:close()
     end
   )
