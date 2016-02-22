@@ -1,5 +1,5 @@
+local read = require('read')
 local net = net
-local file = file -- defer to settings module?
 local string = string
 local assert = assert
 local type = type
@@ -59,13 +59,16 @@ end
 function send_index(conn)
   debug_message('server.send_index')
 
-  file.open('index.html')
-  local index = file.read()
-  file.close()
+  index = read.index()
+
+  local settings = read.current_settings()
+  assert(type(settings.ssid) == 'string', 'ssid must be a string')
+  assert(type(settings.status) == 'string', 'status must be a string')
+  assert(type(settings.yo_to) == 'string', 'yo_to must be a string')
 
   index = string.gsub(index, 'S_', settings.ssid)
   index = string.gsub(index, 'T_', settings.status)
-  index = string.gsub(index, 'R_', settings.yo_recipient)
+  index = string.gsub(index, 'R_', settings.yo_to)
 
   debug_message('sending index')
   debug_message('____________')
@@ -74,13 +77,9 @@ function send_index(conn)
   conn:send('HTTP/1.1 200 OK\n\n' .. index)
 end
 
-function start(current_settings)
-  assert(type(current_settings.ssid) == 'string', 'ssid must be a string')
-  assert(type(current_settings.status) == 'string', 'status must be a string')
-  assert(type(current_settings.yo_recipient) == 'string', 'yo_recipient must be a string')
+function start()
   debug_message('server.start')
   debug_message(srv)
-  settings = current_settings
 
   if srv then
     srv = nil
