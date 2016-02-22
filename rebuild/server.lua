@@ -1,4 +1,5 @@
 local read = require('read')
+local write = require('write')
 local net = net
 local string = string
 local srv = nil
@@ -14,14 +15,45 @@ local function connect(conn, data)
       query_data = get_http_req(req_data)
       debug_message(query_data['METHOD'] .. ' ' .. ' ' .. query_data['User-Agent'])
 
-      --TODO discriminate endpoints (/, /yo.css, /status, /favicon.ico)
       --TODO discriminate request types (POST --> update)
-        --TODO parse payload function rewrite
-        
+      if query_data['METHOD'] == 'POST' then
+        write.new_settings(parse_post(req_data))
+      -- else
+        --TODO discriminate endpoints (/, /yo.css, /status, /favicon.ico)
+      end
+
       send_index(cn)
       cn:close()
     end
   )
+end
+
+function parse_post(req_data)
+  --TODO refactor this function
+  if req_data then
+    local ssid_index = {req_data:find("s=")}
+    local pass_index = {req_data:find("&p=")}
+    local recipient_index = {req_data:find("&r=")}
+    local submit_index = {req_data:find("&s=")}
+
+    if ssid_index[1] ~= nil then
+      local new_ssid = string.gsub(string.sub(req_data, ssid_index[2]+1, pass_index[1]-1), "+", " ")
+      local new_password = string.gsub(string.sub(req_data, pass_index[2]+1, recipient_index[1]-1), "+", " ")
+      local new_recipient = string.upper(string.sub(req_data, recipient_index[2]+1, submit_index[1]-1))
+
+      debug_message(new_ssid)
+      debug_message(new_password)
+      debug_message(new_recipient)
+
+      return {
+        ssid = new_ssid,
+        password = new_password,
+        yo_to = new_recipient
+      }
+    end
+  else
+    return nil
+  end
 end
 
 -- Build and return a table of the http request data
