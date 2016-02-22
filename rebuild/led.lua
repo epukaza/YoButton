@@ -1,6 +1,6 @@
 --pin definitions, should we move it out to another module?
-local led_pin = 1 --filler value
-local override_pin = 2 --filler value
+local led_pin = 3 --filler value
+local override_pin = 8 --filler value
 
 --pattern definitions
 local STOPPED = 0
@@ -22,8 +22,21 @@ local pattern_queue = {}
 local heartbeat_index = 1
 local triple_blink_index = 1
 
+--function declarations
+local init = nil
+local stop = nil
+local do_pattern = nil
+local fade_in_update = nil
+local fade_out_update = nil
+local heartbeat_update = nil
+local triple_blink_update = nil
+local end_pattern = nil
+local override_enable = nil
+local override_disable = nil
+local invalid_timer = nil
+
 -----------------------public functions------------------------------
-local function init(timer)
+function init(timer)
   --handle timer, take exclusive control
   timer_id = timer
   tmr.unregister(timer_id)
@@ -31,10 +44,13 @@ local function init(timer)
   --init pins
   gpio.mode(override_pin, gpio.OUTPUT)
   pwm.setup(led_pin, led_pwm_frequency, 0)
+  pwm.start(led_pin)
+  pwm.stop(led_pin)
+  
   stop()
 end
 
-local function stop()
+function stop()
   if(invalid_timer()) then
     print "Error, call led.init(timer_id) before calling any member functions"
     return
@@ -43,12 +59,12 @@ local function stop()
   --deassert control
   override_disable()
   --stop pwm
-  pwm.stop(led_pin)
+  --pwm.stop(led_pin)
   current_pattern = STOPPED
   pattern_queue = {}
 end
 
-local function do_pattern(pattern)
+function do_pattern(pattern)
   if(invalid_timer()) then
     print "Error, call led.init(timer_id) before calling any member functions"
     return
@@ -73,23 +89,23 @@ local function do_pattern(pattern)
     --if train could be optimized with else's but this is more readable
     if(current_pattern == FADE_IN) then
       pwm.setduty(led_pin, 0)
-      pwm.start()
+      pwm.start(led_pin)
       fade_in_update()
     end
     if(current_pattern == FADE_OUT) then
       pwm.setduty(led_pin, led_max_brightness)
-      pwm.start()
+      pwm.start(led_pin)
       fade_out_update()
     end
     if(current_pattern == HEARTBEAT) then
       pwm.setduty(led_pin, 0)
-      pwm.start()
+      pwm.start(led_pin)
       heartbeat_index = 1
       heartbeat_update()
     end
     if(current_pattern == TRIPLE_BLINK) then
       pwm.setduty(led_pin, led_max_brightness)
-      pwm.start()
+      pwm.start(led_pin)
       triple_blink_index = 1
       triple_blink_update()
     end
@@ -97,7 +113,7 @@ local function do_pattern(pattern)
 end
 
 -----------------------private functions-------------------------
-local function fade_in_update()
+function fade_in_update()
   local current_brightness = pwm.getduty(led_pin)
   current_brightness = current_brightness + 1
   if(current_brightness > led_max_brightness) then
@@ -111,7 +127,7 @@ local function fade_in_update()
   end
 end
 
-local function fade_out_update()
+function fade_out_update()
   local current_brightness = pwm.getduty(led_pin)
   current_brightness = current_brightness - 1
   if(current_brightness < 0) then
@@ -125,7 +141,7 @@ local function fade_out_update()
   end
 end
 
-local function heartbeat_update()
+function heartbeat_update()
   local current_brightness = pwm.getduty(led_pin)
   current_brightness = led_max_brightness - current_brightness
   pwm.setduty(led_pin, current_brightness)
@@ -137,7 +153,7 @@ local function heartbeat_update()
   --pattern does not end
 end
 
-local function triple_blink_update()
+function triple_blink_update()
   local current_brightness = pwm.getduty(led_pin)
   current_brightness = led_max_brightness - current_brightness
   pwm.setduty(led_pin, current_brightness)
@@ -148,7 +164,7 @@ local function triple_blink_update()
   end
 end
 
-local function end_pattern()
+function end_pattern()
   if table.getn(pattern_queue) == 0 then
     stop()
   else
@@ -160,15 +176,15 @@ local function end_pattern()
   end
 end
 
-local function override_enable()
+function override_enable()
   gpio.write(override_pin, gpio.HIGH)
 end
 
-local function override_disable()
+function override_disable()
   gpio.write(override_pin, gpio.LOW)
 end
 
-local function invalid_timer()
+function invalid_timer()
   return (timer_id == nil or timer_id > 6)
 end
 
