@@ -1,8 +1,6 @@
 local read = require('read')
 local net = net
 local string = string
-local assert = assert
-local type = type
 local srv = nil
 local debug_message = debug_message
 
@@ -62,9 +60,6 @@ function send_index(conn)
   index = read.index()
 
   local settings = read.current_settings()
-  assert(type(settings.ssid) == 'string', 'ssid must be a string')
-  assert(type(settings.status) == 'string', 'status must be a string')
-  assert(type(settings.yo_to) == 'string', 'yo_to must be a string')
 
   index = string.gsub(index, 'S_', settings.ssid)
   index = string.gsub(index, 'T_', settings.status)
