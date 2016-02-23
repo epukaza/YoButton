@@ -1,5 +1,4 @@
 local http = http
-local wifi = wifi
 local string = string
 local assert = assert
 local type = type
@@ -17,14 +16,12 @@ function yo(yo_user, api_token)
   local content_length = string.len(content_string)
 
   debug_message('yo.yo: sending Yo')
-  wifi.sleeptype(wifi.NONE_SLEEP)
   http.post(
     'https://api.justyo.co/yo/',
     'Content-Type: application/x-www-form-urlencoded\r\n' ..
     'Content-length: ' .. content_length .. '\r\n',
     content_string,
     function(status_code, response_data)
-      wifi.sleeptype(wifi.LIGHT_SLEEP)
       debug_message('yo.yo: status code: ' .. status_code)
       debug_message('yo.yo: response data: ' .. (response_data or 'nil'))
     end

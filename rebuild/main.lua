@@ -19,15 +19,21 @@ function wifi_setup(func, ...)
     auth = wifi.AUTH_OPEN
   })
   wifi.ap.dhcp.start()
+  wifi.sleeptype(wifi.NONE_SLEEP)
 
   func(...)
+
+  --TODO wifi_setup inactivity timeout
 end
 
 function wifi_default(func, ...)
   server.stop()
   wifi.setmode(wifi.STATION)
+  wifi.sleeptype(wifi.NONE_SLEEP)
 
   func(...)
+
+  wifi.sleeptype(wifi.MODEM_SLEEP)
 end
 
 function short_press()
