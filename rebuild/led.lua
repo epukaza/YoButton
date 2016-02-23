@@ -1,6 +1,6 @@
 --pin definitions, should we move it out to another module?
-local led_pin = 3 --filler value
-local override_pin = 8 --filler value
+local led_pin = 1 --GPIO 5  
+local override_pin = 2 --GPIO 4
 
 --pattern definitions
 local STOPPED = 0
