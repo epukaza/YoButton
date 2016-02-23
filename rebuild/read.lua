@@ -1,6 +1,6 @@
 local wifi = wifi
 local file = file
-local yo_file = 'yo_recipient.txt'
+local yo_file = 'yorecipient.txt'
 local wifi_status = {
   [0] = 'not enabled',
   'connecting',
@@ -32,9 +32,10 @@ function yo_recipient()
 end
 
 function api_key()
-  file.open('api_key.txt')
-  api_key = file.read()
+  file.open('apikey.txt')
+  local api_key = file.read()
   file.close()
+  return api_key
 end
 
 function current_settings()

@@ -10,19 +10,30 @@ local yo = require('yo')
 local server = require('server')
 local read = require('read')
 
+function wifi_setup(func, ...)
+  wifi.setmode(wifi.STATIONAP)
+  wifi.ap.config({
+    ssid = "YoButton-" .. node.chipid(),
+    pwd = "yobutton",
+    max = 1,
+    auth = wifi.AUTH_OPEN
+  })
+  wifi.ap.dhcp.start()
 
-a = '0c6ac771-71fa-420f-810c-2853989a8ca6'
-y = 'ariyeah'
-wifi.sta.config('Pizza Pirate Cove', 'pizzapirates')
-wifi.setmode(wifi.STATION)
+  func(...)
+end
+
+function wifi_default(func, ...)
+  server.stop()
+  wifi.setmode(wifi.STATION)
+
+  func(...)
+end
 
 function short_press()
-  server.stop()
-  yo.yo(y, a)
+  wifi_default(yo.yo, read.yo_recipient(), read.api_key())
 end
 
 function long_press()
-
-
-  server.start()
+  wifi_setup(server.start)
 end

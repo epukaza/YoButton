@@ -2,7 +2,7 @@ local wifi = wifi
 local file = file
 local assert = assert
 local type = type
-local yo_file = 'yo_recipient.txt'
+local yo_file = 'yorecipient.txt'
 local debug_message = debug_message
 
 --TODO: validate ALL THE THINGS!
