@@ -40,58 +40,57 @@ function wifi_default(func, ...)
   wifi.sleeptype(wifi.MODEM_SLEEP)
 end
 
-function short_press()
+function handle_short_press()
   wifi_default(yo.yo, read.yo_recipient(), read.api_key())
 end
 
-function long_press()
+function handle_long_press()
   wifi_setup(server.start)
 end
 
-function short_or_long_press()
+function handle_button_flip()
   local long_press_time = 3000 -- 3 seconds
   local level = gpio.read(button_pin)
-  debug_message('short_or_long_press: ' .. level)
+  debug_message('handle_button_flip: ' .. level)
 
   if level == 1 then -- button depressed
-    debug_message('short_or_long_press: pressed: start long press timer')
+    debug_message('handle_button_flip: pressed: start long press timer')
     tmr.alarm(TIMERS.interrupt, long_press_time, 0, function()
-      debug_message('short_or_long_press: long press!')
+      debug_message('handle_button_flip: long press!')
       if server.is_serving() then
-        debug_message('short_or_long_press: toggle setup OFF')
-        short_press()
+        debug_message('handle_button_flip: toggle setup OFF')
+        handle_short_press()
       else
-        debug_message('short_or_long_press: toggle setup ON')
-        long_press()
+        debug_message('handle_button_flip: toggle setup ON')
+        handle_long_press()
       end
     end)
   else -- button released
-    debug_message('short_or_long_press: released: end long press timer')
+    debug_message('handle_button_flip: released: end long press timer')
     tmr.stop(TIMERS.interrupt)
     if not server.is_serving() then
-      debug_message('short_or_long_press: short press!')
-      short_press()
+      debug_message('handle_button_flip: short press!')
+      handle_short_press()
     end
   end
 end
 
-function debounce(func)
-  local last = 0 --units: microseconds
-  local delay = 50000 --units: microseconds
+function debounce(delay, func)
+  local last = 0
 
   return function(...)
     local now = tmr.now()
     if now - last < delay then
-      tmr.stop(TIMERS.interrupt)
-      debug_message("debounce: prevented extra push")
+      debug_message("debounce: prevent")
       return
     end
 
     last = now
-    debug_message("debounce: succeed")
+    debug_message("debounce: allow")
     return func(...)
   end
 end
 
+handle_short_press = debounce(3000000, handle_short_press) --3 seconds
 gpio.mode(button_pin, gpio.INT, gpio.FLOAT)
-gpio.trig(button_pin, "both", debounce(short_or_long_press))
+gpio.trig(button_pin, "both", debounce(50000, handle_button_flip)) --50 ms
