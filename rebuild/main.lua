@@ -1,13 +1,6 @@
-DEBUG = true
 TIMERS = {
   interrupt = 1
 }
-function debug_message(message)
-  if DEBUG then
-    print(message)
-  end
-  --TODO: rolling last 10
-end
 
 local yo = require('yo')
 local server = require('server')
