@@ -1,5 +1,6 @@
 TIMERS = {
-  interrupt = 1
+  interrupt = 0
+  setup_timeout = 1
 }
 
 local yo = require('yo')
@@ -18,9 +19,13 @@ function wifi_setup(func, ...)
   wifi.ap.dhcp.start()
   wifi.sleeptype(wifi.NONE_SLEEP)
 
+  --wifi_setup inactivity timeout: 5 minutes
+  tmr.alarm(TIMERS.setup_timeout, 60*5*1000, wifi_default(function()
+    return nil  --nil function to use decorator side effects: code smell
+  end))
+
   func(...)
 
-  --TODO wifi_setup inactivity timeout
 end
 
 function wifi_default(func, ...)
