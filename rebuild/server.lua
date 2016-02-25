@@ -5,31 +5,51 @@ local string = string
 local srv = nil
 local debug_message = debug_message
 
+
+local pairs = pairs
+local print = print
 module(...)
 
-local function connect(conn, data)
+local function connect(conn)
   local query_data
 
-  conn:on('receive',
-    function(cn, req_data)
-      query_data = get_http_req(req_data)
-      debug_message(query_data['METHOD'] .. ' ' .. ' ' .. query_data['User-Agent'])
+  conn:on('receive', function(cn, req_data)
+    debug_message('req_data:')
+    debug_message(req_data)
 
-      --TODO discriminate request types (POST --> update)
-      if query_data['METHOD'] == 'POST' then
-        write.new_settings(parse_post(req_data))
-      -- else
-        --TODO discriminate endpoints (/, /yo.css, /status, /favicon.ico)
-      end
+    --below methodology is flawed - this callback handles statelessly per chunk,
+    --however the client MAY send the POST payload in another chunk.
+    --temporarily work around by examining stringy properties of chunk,
+    --but it's totes insecure and will need updating.
 
-      send_index(cn)
-      cn:close()
+    if string.find(req_data, 's=.*&p=.*&r=.*&s=Update') then
+      new_settings = parse_post(req_data)
+      write.new_settings(new_settings)
     end
-  )
+
+    -- query_data = get_http_req(req_data)
+    -- debug_message(query_data['METHOD'] .. ' ' .. ' ' .. query_data['User-Agent'])
+    --TODO discriminate request types (POST --> update)
+    -- if query_data['METHOD'] == 'POST' then
+    --   debug_message('handling POST request')
+    --   new_settings = parse_post(req_data)
+    --   debug_message('new settings: ' .. (new_settings or 'nil'))
+      -- write.new_settings(new_settings)
+    -- else
+      --TODO discriminate endpoints (/, /yo.css, /status, /favicon.ico)
+    -- end
+
+    send_index(cn)
+  end)
+
+  conn:on('sent', function(cn)
+    cn:close()
+  end)
 end
 
 function parse_post(req_data)
   --TODO refactor this function
+  debug_message('server.parse_post')
   if req_data then
     local ssid_index = {req_data:find("s=")}
     local pass_index = {req_data:find("&p=")}
@@ -41,9 +61,9 @@ function parse_post(req_data)
       local new_password = string.gsub(string.sub(req_data, pass_index[2]+1, recipient_index[1]-1), "+", " ")
       local new_recipient = string.upper(string.sub(req_data, recipient_index[2]+1, submit_index[1]-1))
 
-      debug_message(new_ssid)
-      debug_message(new_password)
-      debug_message(new_recipient)
+      debug_message('new ssid: ' .. new_ssid)
+      debug_message('new password: ' .. new_password)
+      debug_message('new recipient: ' .. new_recipient)
 
       return {
         ssid = new_ssid,
@@ -104,7 +124,11 @@ function send_index(conn)
   debug_message('____________')
   debug_message(index)
   debug_message('____________')
-  conn:send('HTTP/1.1 200 OK\n\n' .. index)
+  conn:send('HTTP/1.1 200 OK\r\n\r\n' .. index)
+end
+
+function is_serving()
+  return srv ~= nil
 end
 
 function start()
