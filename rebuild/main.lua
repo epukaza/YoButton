@@ -1,5 +1,5 @@
 TIMERS = {
-  interrupt = 0
+  interrupt = 0,
   setup_timeout = 1
 }
 
@@ -13,16 +13,19 @@ function wifi_setup(func, ...)
   wifi.ap.config({
     ssid = "YoButton-" .. node.chipid(),
     pwd = "yobutton",
-    max = 1,
-    auth = wifi.AUTH_OPEN
+    auth = wifi.AUTH_OPEN,
+    max = 1
   })
   wifi.ap.dhcp.start()
   wifi.sleeptype(wifi.NONE_SLEEP)
 
   --wifi_setup inactivity timeout: 5 minutes
-  tmr.alarm(TIMERS.setup_timeout, 60*5*1000, wifi_default(function()
-    return nil  --nil function to use decorator side effects: code smell
-  end))
+  tmr.alarm(TIMERS.setup_timeout, 60*5*1000, tmr.ALARM_SINGLE, function()
+    wifi_default(function()
+      debug_message('wifi_setup: timeout')
+      return nil  --nil function to use decorator side effects: code smell
+    end)
+  end)
 
   func(...)
 
@@ -53,7 +56,7 @@ function handle_button_flip()
 
   if level == 1 then -- button depressed
     debug_message('handle_button_flip: pressed: start long press timer')
-    tmr.alarm(TIMERS.interrupt, long_press_time, 0, function()
+    tmr.alarm(TIMERS.interrupt, long_press_time, tmr.ALARM_SINGLE, function()
       debug_message('handle_button_flip: long press!')
       if server.is_serving() then
         debug_message('handle_button_flip: toggle setup OFF')
