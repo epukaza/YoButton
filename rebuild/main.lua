@@ -92,6 +92,7 @@ function debounce(delay, func)
   end
 end
 
+wifi.setmode(wifi.STATION)
 handle_short_press = debounce(3000000, handle_short_press) --3 seconds
 gpio.mode(button_pin, gpio.INT, gpio.FLOAT)
 gpio.trig(button_pin, "both", debounce(50000, handle_button_flip)) --50 ms
