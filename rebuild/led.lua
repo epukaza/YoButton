@@ -28,7 +28,7 @@ local patterns_initial_pwm_duty = {
   led_max_brightness
 }
 
-local patterns_step_sizes = {
+local pattern_intervals = {
   [0] = 0,
   HEARTBEAT_times,
   1,
@@ -93,17 +93,29 @@ function do_pattern(next_pattern)
 
     pattern(
       patterns_initial_pwm_duty[next_pattern],
-      patterns_step_sizes[next_pattern],
+      pattern_intervals[next_pattern],
       next_pattern_funcs[next_pattern]
     )
   end
+
+  --rewrite queue:
+  --when queueing new pattern, if transition (or flag) not nil then do immediately
+  --otherwise enqueue and let end_function or similar get next from queue
+
+  --STOP should instead a pattern like all others, renamed as OFF
+
+  --transition functions transition(t) --> t+1
+  --if t+1 is nil, end pattern
+
 end
 
-function pattern(initial_pwm_duty, step_sizes, transition)
+--TODO: intervals not used (still using global state)
+function pattern(initial_pwm_duty, intervals, transition)
   debug_message('led.pattern')
   pwm.setduty(led_pin, initial_pwm_duty)
   local pwm_duty = initial_pwm_duty
 
+  --looping timer instead of alarm_single, can deregister on nil
   transition()
 end
 
