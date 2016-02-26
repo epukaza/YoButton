@@ -1,7 +1,15 @@
---pin definitions, should we move it out to another module?
 -- local led_pin = 1 --GPIO 5
 local led_pin = 2 --nodeMCU LED
 local override_pin = 4 --GPIO 4
+
+local HEARTBEAT_times = {40, 200, 40, 900} --format is alternating on and off times in ms
+local TRIPLEBLINK_times = {100, 20, 100, 20, 100, 20, 100} --format is alternating off and on times in ms
+local led_pwm_frequency = 500 --units: hz
+local led_max_brightness = 1023
+local current_pattern
+local pattern_queue = {}
+local HEARTBEAT_index = 1
+local TRIPLEBLINK_index = 1
 
 --pattern definitions
 local patterns = {
@@ -12,17 +20,21 @@ local patterns = {
   TRIPLEBLINK = 4
 }
 
---private constants
-local HEARTBEAT_times = {40, 200, 40, 900} --format is alternating on and off times in ms
-local TRIPLEBLINK_times = {100, 20, 100, 20, 100, 20, 100} --format is alternating off and on times in ms
-local led_pwm_frequency = 500 --units: hz
-local led_max_brightness = 1023
+local patterns_initial_pwm_duty = {
+  [0] = 0,
+  0,
+  0,
+  led_max_brightness,
+  led_max_brightness
+}
 
---state variables
-local current_pattern
-local pattern_queue = {}
-local HEARTBEAT_index = 1
-local TRIPLEBLINK_index = 1
+local patterns_step_sizes = {
+  [0] = 0,
+  HEARTBEAT_times,
+  1,
+  1,
+  TRIPLEBLINK_times
+}
 
 --dependencies
 local TIMER = TIMERS.led
@@ -39,98 +51,62 @@ function testcall()
   do_pattern(patterns.FADEOUT)
 end
 
-function init(timer)
-  debug_message('led.timer')
+function init()
+  debug_message('led.init')
+
   --handle timer, take exclusive control
-  TIMER = timer
   tmr.unregister(TIMER)
+  current_pattern = patterns.STOPPED
 
   --init pins
   gpio.mode(override_pin, gpio.OUTPUT)
   pwm.setup(led_pin, led_pwm_frequency, 0)
   pwm.start(led_pin)
   pwm.stop(led_pin)
-  
-  stop()
 end
 
 function stop()
-  if(invalid_timer()) then
-    print "Error, call led.init(TIMER) before calling any member functions"
-    return
-  end
   tmr.unregister(TIMER)
-
   --deassert control
   gpio.write(override_pin, gpio.LOW)
-
   current_pattern = patterns.STOPPED
   pattern_queue = {}
 end
 
-function do_pattern(pattern)
-  debug_message('led.do_pattern: ' .. pattern)
+function do_pattern(next_pattern)
+  debug_message('led.do_pattern: ' .. next_pattern)
 
-  if(pattern == current_pattern) then
-    --do nothing
+  if(next_pattern == current_pattern) then
+    debug_message('led.do_pattern: next same as current')
     return
   end
-
-  if not (current_pattern == patterns.STOPPED) then
-    --put pattern in queue
-    table.insert(pattern_queue, pattern)
+  if current_pattern ~= patterns.STOPPED then
+    debug_message('led.do_pattern: current not STOPPED')
+    --put next_pattern in queue
+    table.insert(pattern_queue, next_pattern)
   else
-
-    debug_message('current, next: ' .. current_pattern .. ', ' .. pattern)
-    --start pattern!
-    current_pattern = pattern
-  
+    debug_message('current, next: ' .. current_pattern .. ', ' .. next_pattern)
+    --start next_pattern!
+    current_pattern = next_pattern
     -- override_enable()
     gpio.write(override_pin, gpio.HIGH)
 
-    pattern_funcs[current_pattern]()
+    pattern(
+      patterns_initial_pwm_duty[next_pattern],
+      patterns_step_sizes[next_pattern],
+      next_pattern_funcs[next_pattern]
+    )
   end
 end
 
--- do patterns --
-function do_FADEIN()
-  debug_message('led.do_FADEIN')
-  pwm.setduty(led_pin, 0)
-  pwm.start(led_pin)
-  FADEIN_update()
+function pattern(initial_pwm_duty, step_sizes, transition)
+  debug_message('led.pattern')
+  pwm.setduty(led_pin, initial_pwm_duty)
+  local pwm_duty = initial_pwm_duty
+
+  transition()
 end
 
-function do_FADEOUT()
-  debug_message('led.do_FADEOUT')
-  pwm.setduty(led_pin, led_max_brightness)
-  pwm.start(led_pin)
-  FADEOUT_update()
-end
-
-function do_HEARTBEAT()
-  debug_message('led.do_HEARTBEAT')
-  pwm.setduty(led_pin, 0)
-  pwm.start(led_pin)
-  HEARTBEAT_index = 1
-  HEARTBEAT_update()
-end
-
-function do_TRIPLEBLINK()
-  debug_message('led.do_TRIPLEBLINK')
-  pwm.setduty(led_pin, led_max_brightness)
-  pwm.start(led_pin)
-  TRIPLEBLINK_index = 1
-  TRIPLEBLINK_update()
-end
-
-pattern_funcs = {
-  do_HEARTBEAT,
-  do_FADEIN,
-  do_FADEOUT,
-  do_TRIPLEBLINK
-}
-
------------------------private functions-------------------------
 function FADEIN_update()
   local current_brightness = pwm.getduty(led_pin)
   current_brightness = current_brightness + 1
@@ -138,6 +114,7 @@ function FADEIN_update()
     current_brightness = led_max_brightness
   end
   pwm.setduty(led_pin, current_brightness)
+
   if current_brightness < led_max_brightness then
     tmr.alarm(TIMER, 2, tmr.ALARM_SINGLE, FADEIN_update)
   else
@@ -152,6 +129,7 @@ function FADEOUT_update()
     current_brightness = 0
   end
   pwm.setduty(led_pin, current_brightness)
+
   if current_brightness > 0 then
     tmr.alarm(TIMER, 2, tmr.ALARM_SINGLE, FADEOUT_update)
   else
@@ -182,6 +160,13 @@ function TRIPLEBLINK_update()
   end
 end
 
+next_pattern_funcs = {
+  HEARTBEAT_update,
+  FADEIN_update,
+  FADEOUT_update,
+  TRIPLEBLINK_update
+}
+
 function end_pattern()
   if table.getn(pattern_queue) == 0 then
     stop()
@@ -192,10 +177,6 @@ function end_pattern()
     tmr.unregister(TIMER)
     do_pattern(p)
   end
-end
-
-function invalid_timer()
-  return (TIMER == nil or TIMER > 6)
 end
 
 init(TIMER)
