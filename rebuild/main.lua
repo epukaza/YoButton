@@ -1,10 +1,12 @@
 TIMERS = {
   interrupt = 0,
-  setup_timeout = 1
+  setup_timeout = 1,
+  led = 3
 }
 
 local yo = require('yo')
 local server = require('server')
+local led = require('led')
 local read = require('read')
 local button_pin = 6
 
