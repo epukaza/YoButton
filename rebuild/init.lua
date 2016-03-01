@@ -1,4 +1,4 @@
-DEBUG = true
+DEBUG = false
 
 function debug_message(message)
   if DEBUG then
@@ -10,8 +10,16 @@ end
 if DEBUG then
   debug_message('1 second startup delay on timer 0 ...')
   tmr.alarm(0, 1000, 0, function()
-    dofile('main.lua')
+    if file.exists('main.lc') then
+      dofile('main.lc')
+    else
+      dofile('main.lua')
+    end
   end)
 else
-  dofile('main.lua')
+  if file.exists('main.lc') then
+    dofile('main.lc')
+  else
+    dofile('main.lua')
+  end
 end

@@ -4,13 +4,17 @@ TIMERS = {
   led = 3
 }
 
+local button_pin = 6
+local led_pin = 1
 local yo = require('yo')
 local server = require('server')
 local led = require('led')
 local read = require('read')
-local button_pin = 6
 
-function wifi_setup(func, ...)
+function setup_mode(func, ...)
+  led.kill()
+  led.q_heart_beat()
+
   wifi.setmode(wifi.STATIONAP)
   wifi.ap.config({
     ssid = "YoButton-" .. node.chipid(),
@@ -21,34 +25,39 @@ function wifi_setup(func, ...)
   wifi.ap.dhcp.start()
   wifi.sleeptype(wifi.NONE_SLEEP)
 
-  --wifi_setup inactivity timeout: 5 minutes
+  --setup_mode inactivity timeout: 5 minutes
   tmr.alarm(TIMERS.setup_timeout, 60*5*1000, tmr.ALARM_SINGLE, function()
-    wifi_default(function()
-      debug_message('wifi_setup: timeout')
+    default_mode(function()
+      debug_message('setup_mode: timeout')
       return nil  --nil function to use decorator side effects: code smell
     end)
   end)
 
   func(...)
-
 end
 
-function wifi_default(func, ...)
+function default_mode(func, ...)
+  led.kill()
+  led.q_fade_in()
   server.stop()
+
   wifi.setmode(wifi.STATION)
   wifi.sleeptype(wifi.NONE_SLEEP)
 
-  func(...)
+  local success = func(...)
+
+  debug_message(success)
 
   wifi.sleeptype(wifi.MODEM_SLEEP)
 end
 
+
 function handle_short_press()
-  wifi_default(yo.yo, read.yo_recipient(), read.api_key())
+  default_mode(yo.yo, read.yo_recipient(), read.api_key())
 end
 
 function handle_long_press()
-  wifi_setup(server.start)
+  setup_mode(server.start)
 end
 
 function handle_button_flip()
@@ -95,6 +104,8 @@ function debounce(delay, func)
 end
 
 wifi.setmode(wifi.STATION)
+pwm.setduty(led_pin, 0)
+
 handle_short_press = debounce(3000000, handle_short_press) --3 seconds
 gpio.mode(button_pin, gpio.INT, gpio.FLOAT)
 gpio.trig(button_pin, "both", debounce(50000, handle_button_flip)) --50 ms
