@@ -109,4 +109,10 @@ function next_pattern()
   end
 end
 
+function kill()
+  Q = {}
+  tmr.unregister(TIMER)
+  pwm.setduty(LED_PIN, 0)
+end
+
 init(TIMER)

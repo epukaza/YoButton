@@ -1,5 +1,6 @@
 local http = http
 local string = string
+local led = require('led')
 local assert = assert
 local type = type
 local debug_message = debug_message
@@ -14,6 +15,7 @@ function yo(yo_user, api_token)
 
   local content_string = "api_token=" .. api_token .. "&username=" .. string.upper(yo_user) .. '\r\n\r\n'
   local content_length = string.len(content_string)
+  local succeeded = false
 
   debug_message('yo.yo: sending Yo')
   http.post(
@@ -24,6 +26,21 @@ function yo(yo_user, api_token)
     function(status_code, response_data)
       debug_message('yo.yo: status code: ' .. status_code)
       debug_message('yo.yo: response data: ' .. (response_data or 'nil'))
+
+      if status_code >= 200 and status_code < 300 then
+        succeeded = true
+      else
+        succeeded = false
+      end
+      yo_sent(succeeded)
     end
   )
+end
+
+function yo_sent(succeeded)
+  if succeeded then
+    led.q_fade_out()
+  else
+    led.q_triple_blink()
+  end
 end
