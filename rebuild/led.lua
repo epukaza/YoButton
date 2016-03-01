@@ -1,5 +1,5 @@
 -- local led_pin = 1 --GPIO 5
-local led_pin = 2 --nodeMCU LED
+local led_pin = 1 --nodeMCU LED
 local override_pin = 4 --GPIO 4
 
 local HEARTBEAT_times = {40, 200, 40, 900} --format is alternating on and off times in ms
@@ -48,6 +48,7 @@ local print = print
 module(...)
 
 function testcall()
+  do_pattern(patterns.FADEIN)
   do_pattern(patterns.FADEOUT)
 end
 

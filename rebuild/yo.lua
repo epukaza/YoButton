@@ -12,12 +12,12 @@ function yo(yo_user, api_token)
   assert(yo_user ~= '', 'yo_user must not be empty string')
   assert(api_token ~= '', 'api_token must not be empty string')
 
-  local content_string = "api_token=" .. api_token .. "&username=" .. string.upper(yo_user)
+  local content_string = "api_token=" .. api_token .. "&username=" .. string.upper(yo_user) .. '\r\n\r\n'
   local content_length = string.len(content_string)
 
   debug_message('yo.yo: sending Yo')
   http.post(
-    'https://api.justyo.co/yo/',
+    'http://api.justyo.co/yo/',
     'Content-Type: application/x-www-form-urlencoded\r\n' ..
     'Content-length: ' .. content_length .. '\r\n',
     content_string,
