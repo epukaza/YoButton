@@ -30,12 +30,10 @@ end
 
 -- params must contain duty and interval
 function pattern(params, trans_func)
-  local params = params 
+  local params = params
+  local callback = nil
 
-  debug_message('pattern')
-  for k,v in pairs(params) do print(k,v) end
-
-  function callback()
+  callback = function()
     if params and params.duty ~= nil then
       pwm.setduty(LED_PIN, params.duty)
       tmr.alarm(TIMER, params.interval, tmr.ALARM_SINGLE, callback)
@@ -50,7 +48,6 @@ end
 
 function enqueue(pattern)
   debug_message('enqueue')
-  for k,v in pairs(Q) do print(k,v) end
   table.insert(Q, pattern)
   -- debug_message('tmr.state ' .. tostring(tmr.state(TIMER)))
   -- if not tmr.state(TIMER) then
@@ -78,8 +75,22 @@ end
 
 
 
+function q_blink()
+  print('q_blink')
 
+  local params = {interval=1000, duty=0}
+  local transition = function(p)
+    if params.duty == 0 then
+      params.duty = MAX_DUTY
+    else
+      params.duty = 0
+    end
 
+    return params
+  end
+
+  enqueue(pattern(params, transition))
+end
 
 -- built-in conveniences specific to Yo Button
 function q_fade_in()
