@@ -1,7 +1,5 @@
 local LED_PIN = 1
 local MAX_DUTY = 1023
-local HEART_BEAT_IDX = 1
-local TRIPLE_BLINK_IDX = 1
 local TIMER = TIMERS.led
 local Q = {}
 
@@ -11,15 +9,9 @@ local tmr = tmr
 local table = table
 local next = next
 
-local tostring = tostring
-local print = print
-local pairs = pairs
-
 module(...)
 
 local function init()
-  debug_message('led.init')
-
   --handle timer, take exclusive control
   tmr.unregister(TIMER)
   --init pins
@@ -46,15 +38,6 @@ function pattern(params, trans_func)
   return callback
 end
 
-function enqueue(pattern)
-  debug_message('enqueue')
-  table.insert(Q, pattern)
-  debug_message('tmr.state ' .. tostring(tmr.state(TIMER)))
-  if not tmr.state(TIMER) then
-    next_pattern()
-  end
-end
-
 function next_pattern()
   debug_message('next_pattern')
   if next(Q) then
@@ -65,36 +48,24 @@ function next_pattern()
   end
 end
 
+function enqueue(pattern)
+  debug_message('enqueue')
+  table.insert(Q, pattern)
+  if not tmr.state(TIMER) then
+    next_pattern()
+  end
+end
+
 function kill()
   Q = {}
   tmr.unregister(TIMER)
   pwm.setduty(LED_PIN, 0)
 end
 
-
-
-
-
-function q_blink()
-  print('q_blink')
-
-  local params = {interval=1000, duty=0}
-  local transition = function(p)
-    if params.duty == 0 then
-      params.duty = MAX_DUTY
-    else
-      params.duty = 0
-    end
-
-    return params
-  end
-
-  enqueue(pattern(params, transition))
-end
-
 -- built-in conveniences specific to Yo Button
 function q_fade_in()
   local params = {interval=2, duty=0}
+
   local transition = function(params)
     if params.duty >= 1023 then
       return nil
@@ -109,6 +80,7 @@ end
 
 function q_fade_out()
   local params = {interval=2, duty=MAX_DUTY}
+
   local transition = function(params)
     if params.duty <= 0 then
       return nil
@@ -121,67 +93,45 @@ function q_fade_out()
   enqueue(pattern(params, transition))
 end
 
--- local function fade_in()
---   local current_brightness = pwm.getduty(LED_PIN)
+function q_triple_blink()
+  local params = {interval=50, duty=MAX_DUTY, reps = 3}
 
---   if current_brightness < MAX_DUTY then
---     current_brightness = current_brightness + 1
---     pwm.setduty(LED_PIN, current_brightness)
---     tmr.alarm(TIMER, 2, tmr.ALARM_SINGLE, fade_in)
---   else
---     next_pattern()
---   end
--- end
+  local transition = function(params)
+    if params.reps <= 0 then
+      return nil
+    elseif params.interval == 50 then
+      params.interval = 200
+      params.duty = 0
+      params.reps = params.reps - 1
+    else
+      params.interval = 50
+      params.duty = MAX_DUTY
+    end
 
--- local function fade_out()
---   local current_brightness = pwm.getduty(LED_PIN)
+    return params
+  end
 
---   if current_brightness > 0 then
---     current_brightness = current_brightness - 1
---     pwm.setduty(LED_PIN, current_brightness)
---     tmr.alarm(TIMER, 2, tmr.ALARM_SINGLE, fade_out)
---   else
---     next_pattern()
---   end
--- end
+  enqueue(pattern(params, transition))
+end
 
--- local function heart_beat()
---   local intervals = {40, 200, 40, 900} --alternating, millisec
---   local current_brightness = pwm.getduty(LED_PIN)
+function q_heart_beat()
+  local params = {interval=40, duty=MAX_DUTY, index = 1}
 
---   current_brightness = MAX_DUTY - current_brightness
---   pwm.setduty(LED_PIN, current_brightness)
+  local transition = function(params)
+    local intervals = {40, 200, 40, 900}
 
---   tmr.alarm(TIMER, intervals[HEART_BEAT_IDX], tmr.ALARM_SINGLE, heart_beat)
+    params.index = params.index + 1
+    if params.index > 4 then
+      params.index = 1
+    end
 
---   HEART_BEAT_IDX = HEART_BEAT_IDX + 1
---   if HEART_BEAT_IDX > table.getn(intervals) then
---     HEART_BEAT_IDX = 1
---   end
---   -- must call next_pattern() yourself
--- end
+    params.interval = intervals[params.index]
+    params.duty = (params.index % 2) * MAX_DUTY
 
--- local function triple_blink()
---   local intervals =  {200, 50, 200, 50, 200, 50, 200} --alternating, millisec
+    return params
+  end
 
---   local current_brightness = pwm.getduty(LED_PIN)
---   current_brightness = MAX_DUTY - current_brightness
---   pwm.setduty(LED_PIN, current_brightness)
-  
---   TRIPLE_BLINK_IDX = TRIPLE_BLINK_IDX + 1
---   if TRIPLE_BLINK_IDX > table.getn(intervals) then
---     TRIPLE_BLINK_IDX = 1
---     pwm.setduty(LED_PIN, 0)
---     next_pattern()
---   else
---     tmr.alarm(TIMER, intervals[TRIPLE_BLINK_IDX], tmr.ALARM_SINGLE, triple_blink)
---   end
--- end
-
--- interface --
--- q_fade_in = enqueue(fade_in)
--- q_fade_out = enqueue(fade_out)
--- q_heart_beat = enqueue(heart_beat)
--- q_triple_blink = enqueue(triple_blink)
+  enqueue(pattern(params, transition))
+end
 
 init(TIMER)
