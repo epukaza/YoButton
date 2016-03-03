@@ -49,10 +49,10 @@ end
 function enqueue(pattern)
   debug_message('enqueue')
   table.insert(Q, pattern)
-  -- debug_message('tmr.state ' .. tostring(tmr.state(TIMER)))
-  -- if not tmr.state(TIMER) then
-  --   next_pattern()
-  -- end
+  debug_message('tmr.state ' .. tostring(tmr.state(TIMER)))
+  if not tmr.state(TIMER) then
+    next_pattern()
+  end
 end
 
 function next_pattern()
